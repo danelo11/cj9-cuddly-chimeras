@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "Bug Hunt"
+version = "0.1.0"
+description = "An asymmetrical multiplayer game in which one player plays as a bug running from a developer within a computer, and the developer must catch the bug without accidentally destroying any features of the computer in the process."
+authors = ["Danel Lorente <danelue3@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "3.10.*"
+
+[tool.poetry.dev-dependencies]
+# Base tools
+flake8 = "~4.0.1"
+isort = "~5.10.1"
+pre-commit = "~2.17.0"
+
+# Flake8 plugins, see https://github.com/python-discord/code-jam-template/tree/main#plugin-list
+flake8-docstrings = "~1.6.0"
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
