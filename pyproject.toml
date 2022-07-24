@@ -7,6 +7,8 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "3.10.*"
+pyglet = "^1.5.26"
+websockets = "^10.3"
 
 [tool.poetry.dev-dependencies]
 # Base tools
