@@ -25,13 +25,14 @@ def on_draw():
 
 
 def update(_dt):
-    label.text = vrs["label.text"]
+    if label.text != vrs["label.text"]:
+        label.text = vrs["label.text"]
 
 
 async def networking():
     async with websockets.connect("wss://ws.ifelse.io") as websocket:
         await websocket.recv()  # Random "Request served by <ID>" message
-        vrs["label.text"] += " YES"
+        vrs["label.text"] += " This is added by networking()!"
 
 
 if __name__ == "__main__":
