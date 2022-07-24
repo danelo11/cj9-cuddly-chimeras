@@ -65,13 +65,13 @@ $ poetry env use <path to python executable>
 
 // or you could directly use the following command if you have python exeutable in your Path
 
-$ poetry env use python3.10  
+$ poetry env use python3.10
 ```
 
-That will create a directory `./venv/` with the Python binaries and then you will be able to install packages for that isolated environment.  
+That will create a directory `./venv/` with the Python binaries and then you will be able to install packages for that isolated environment.
 
 
-Install all the **Bug Hunt Game** dependencies in the isolated environment:  
+Install all the **Bug Hunt Game** dependencies in the isolated environment:
 
 ```console
 $ poetry install
