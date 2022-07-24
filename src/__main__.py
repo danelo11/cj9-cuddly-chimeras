@@ -5,12 +5,12 @@ import pyglet
 import websockets
 
 window = pyglet.window.Window(
-    caption = "Hello, World!",
+    caption="Hello, World!",
 )
 
 label = pyglet.text.Label(
     "Hello, World!",
-    x=window.width/2, y=window.height/2,
+    x=window.width / 2, y=window.height / 2,
 )
 
 vrs = {
@@ -30,7 +30,7 @@ def update(_dt):
 
 async def networking():
     async with websockets.connect("wss://ws.ifelse.io") as websocket:
-        await websocket.recv() # Random "Request served by <ID>" message
+        await websocket.recv()  # Random "Request served by <ID>" message
         vrs["label.text"] += " YES"
 
 
