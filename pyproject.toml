@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "Bug Hunt"
 version = "0.1.0"
-description = "An asymmetrical multiplayer game in which one player plays as a bug running from a developer within a computer, and the developer must catch the bug without accidentally destroying any features of the computer in the process."
+description = "A multiplayer game in which some players play as bugs running away from a developer within a computer. The developer must catch the bugs taking advantage of certain facilities to do so."
 authors = ["Danel Lorente <danelue3@gmail.com>"]
 license = "MIT"
 
