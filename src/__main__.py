@@ -1,42 +1,50 @@
-import asyncio
-import concurrent.futures
+import select
 
 import pyglet
-import websockets
+from wsproto.events import CloseConnection, Message
+
+import ws
 
 window = pyglet.window.Window(
     caption="Hello, World!",
 )
+batch = pyglet.graphics.Batch()
 
 label = pyglet.text.Label(
     "Hello, World!",
     x=window.width / 2, y=window.height / 2,
+    batch=batch,
 )
 
-vrs = {
-    "label.text": label.text,
-}
+host, port = "localhost", 8765
 
 
 @window.event
 def on_draw():
     window.clear()
-    label.draw()
+    batch.draw()
 
 
 def update(_dt):
-    if label.text != vrs["label.text"]:
-        label.text = vrs["label.text"]
+    pass  # Code
 
+    ready = select.select([ws.conn], [], [], 0)
+    if ready[0]:
+        ws.net_recv()
 
-async def networking():
-    async with websockets.connect("wss://ws.ifelse.io") as websocket:
-        await websocket.recv()  # Random "Request served by <ID>" message
-        vrs["label.text"] += " This is added by networking()!"
+    for network_event in ws.ws.events():
+        if isinstance(network_event, Message):
+            print(network_event.data)
+        elif isinstance(network_event, CloseConnection):
+            ws.setup(host, port)
 
 
 if __name__ == "__main__":
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(lambda: asyncio.run(networking()))
-        pyglet.clock.schedule_interval(update, 1/60)
-        pyglet.app.run()
+    ws.setup(host, port)
+    ws.net_send(ws.ws.send(Message("Hello, World!")))
+    ws.net_send(ws.ws.send(Message("It works!")))
+
+    pyglet.clock.schedule_interval(update, 1/60)
+    pyglet.app.run()
+
+    ws.close()
