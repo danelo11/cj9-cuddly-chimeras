@@ -2,7 +2,9 @@ import socket
 
 from wsproto import WSConnection
 from wsproto.connection import ConnectionType
-from wsproto.events import AcceptConnection, CloseConnection, Request
+from wsproto.events import (
+    AcceptConnection, BytesMessage, CloseConnection, Request, TextMessage
+)
 
 RECEIVE_BYTES = 4096
 
@@ -15,6 +17,18 @@ def net_send(out_data: bytes) -> None:
         raise Exception("setup() not run")
 
     conn.send(out_data)
+
+
+def send(data: str | bytes) -> None:
+    if ws is None or conn is None:
+        raise Exception("setup() not run")
+
+    if isinstance(data, str):
+        net_send(ws.send(TextMessage(data)))
+    elif isinstance(data, bytes):
+        net_send(ws.send(BytesMessage(data)))
+    else:
+        raise Exception("send() only accepts str or bytes")
 
 
 def net_recv() -> None:

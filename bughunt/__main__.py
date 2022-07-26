@@ -39,7 +39,7 @@ def update(dt):
     if player.y > window.height - player.height:
         player.y = window.height - player.height
 
-    ws.net_send(ws.ws.send(Message(str(player.x) + "," + str(player.y))))
+    ws.send(str(player.x) + "," + str(player.y))
 
 
 def network_update(_dt):
