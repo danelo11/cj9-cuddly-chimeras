@@ -28,6 +28,8 @@ def on_draw():
 def update(_dt):
     pass  # Code
 
+
+def network_update(_dt):
     ready = select.select([ws.conn], [], [], 0)
     if ready[0]:
         ws.net_recv()
@@ -45,6 +47,7 @@ if __name__ == "__main__":
     ws.net_send(ws.ws.send(Message("It works!")))
 
     pyglet.clock.schedule_interval(update, 1/60)
+    pyglet.clock.schedule_interval(network_update, 1/60)
     pyglet.app.run()
 
     ws.close()
