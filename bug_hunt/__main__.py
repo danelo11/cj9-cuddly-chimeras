@@ -1,9 +1,8 @@
 import select
 
 import pyglet
-from wsproto.events import CloseConnection, Message
-
 import ws
+from wsproto.events import CloseConnection, Message
 
 window = pyglet.window.Window(
     caption="Hello, World!",
