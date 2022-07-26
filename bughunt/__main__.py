@@ -1,8 +1,9 @@
 import select
 
 import pyglet
-import ws
 from wsproto.events import CloseConnection, Message
+
+from bughunt import ws
 
 window = pyglet.window.Window(
     caption="Hello, World!",
@@ -80,7 +81,7 @@ def on_key_release(symbol, modifiers):
             player_speed[0] += pixels_per_second
 
 
-if __name__ == "__main__":
+def main():
     ws.setup(host, port)
 
     pyglet.clock.schedule_interval(update, 1/60)
@@ -88,3 +89,7 @@ if __name__ == "__main__":
     pyglet.app.run()
 
     ws.close()
+
+
+if __name__ == "__main__":
+    main()

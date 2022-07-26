@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "Bug Hunt"
+name = "bughunt"
 version = "0.1.0"
 description = "A multiplayer game in which some players play as bugs running away from a developer within a computer. The developer must catch the bugs taking advantage of certain facilities to do so."
 authors = ["Danel Lorente <danelue3@gmail.com>"]
@@ -16,6 +16,9 @@ websockets = "^10.3"
 flake8 = "~4.0.1"
 isort = "~5.10.1"
 pre-commit = "~2.17.0"
+
+[tool.poetry.scripts]
+bughunt = "bughunt.__main__:main"
 
 # Flake8 plugins, see https://github.com/python-discord/code-jam-template/tree/main#plugin-list
 flake8-docstrings = "~1.6.0"
