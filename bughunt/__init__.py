@@ -9,16 +9,17 @@ logger = logging.getLogger(__name__)
 
 @functools.lru_cache()
 def logging_setup(
-    default_path: str = "logging.json",
+    config_file_name: str = "logging.json",
     default_level: int = logging.DEBUG
 ) -> None:
     """Establishing logging configuration to prompt messages to the console.
 
     Args:
-        default_path (str, optional): Configuration file name. Defaults to "logging.json".
+        config_file_name (str, optional): Configuration file name. Defaults to "logging.json".
         default_level (int, optional): Logging level. Defaults to logging.DEBUG.
     """
-    path = Path(__file__).parent / default_path
+    path = Path(__file__).parents[1] / 'config' / config_file_name
+    print(path)
     if path.exists():
         with path.open(mode="rt") as f:
             config = json.load(f)
@@ -64,6 +65,3 @@ def set_console_log_level(
             f"logger.__dict__={logger.__dict__}"
         )
     return logger
-
-
-logging_setup()
