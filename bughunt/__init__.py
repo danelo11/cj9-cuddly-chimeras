@@ -30,4 +30,40 @@ def logging_setup(
         logger.warning("Basic logging configuration successfully created.")
 
 
+def set_console_log_level(
+    logger_level: int = logging.DEBUG,
+    console_handler_level: int = logging.DEBUG,
+) -> logging.Logger:
+    """Change level of messages displayed through stdout.
+
+    Args:
+        logger_level (int, optional): logger level. Defaults to logging.DEBUG.
+        console_handler_level (int, optional): the console handler level. Defaults to logging.INFO.
+
+    Returns:
+        logging.Logger: The output logger.
+    """
+    try:
+        root: logging.Logger = logger.__dict__["parent"]
+        _console_handler = [hand for hand in root.handlers if hand.name == "console"]
+        try:
+            console_handler = _console_handler[0]
+            console_handler.setLevel(console_handler_level)
+            root.setLevel(logger_level)
+            logger.setLevel(logger_level)
+        except IndexError:
+            logger.warning(
+                "Root logger has no console handler attached! "
+                f"Can't set console handler level to {console_handler_level}"
+            )
+
+    except AttributeError:
+        logger.warning(
+            "No root logger found. "
+            f"Can't set root logger level to {logger_level}.\n"
+            f"logger.__dict__={logger.__dict__}"
+        )
+    return logger
+
+
 logging_setup()
