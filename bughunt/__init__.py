@@ -12,7 +12,7 @@ def logging_setup(
     default_path: str = "logging.json",
     default_level: int = logging.DEBUG
 ) -> None:
-    """Establishing logging configuration to propmt messages to the console.
+    """Establishing logging configuration to prompt messages to the console.
 
     Args:
         default_path (str, optional): Configuration file name. Defaults to "logging.json".
