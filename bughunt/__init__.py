@@ -19,7 +19,6 @@ def logging_setup(
         default_level (int, optional): Logging level. Defaults to logging.DEBUG.
     """
     path = Path(__file__).parents[1] / 'config' / config_file_name
-    print(path)
     if path.exists():
         with path.open(mode="rt") as f:
             config = json.load(f)
