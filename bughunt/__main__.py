@@ -4,7 +4,7 @@ import numpy as np
 import pyglet
 from wsproto.events import CloseConnection, Message
 
-from bughunt import ws
+from bughunt import logging_setup, ws
 
 window = pyglet.window.Window(
     caption="Hello, World!",
@@ -85,6 +85,7 @@ def on_key_release(symbol, modifiers):
 
 
 def main():
+    logging_setup()
     ws.setup(host, port)
 
     pyglet.clock.schedule_interval(update, 1/60)
