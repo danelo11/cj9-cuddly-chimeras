@@ -1,5 +1,7 @@
 import socket
+import ssl
 
+import certifi
 from wsproto import WSConnection
 from wsproto.connection import ConnectionType
 from wsproto.events import (
@@ -8,6 +10,7 @@ from wsproto.events import (
 
 RECEIVE_BYTES = 4096
 
+ctx = ssl.create_default_context(cafile=certifi.where())
 conn = None
 ws = None
 
@@ -58,11 +61,12 @@ def close() -> None:
 
 def setup(host: str, port: int) -> None:
     global conn, ws
-    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((host, port))
+    conn = socket.create_connection((host, port))
+    if port == 443:
+        conn = ctx.wrap_socket(conn, server_hostname=host)
 
     ws = WSConnection(ConnectionType.CLIENT)
-    net_send(ws.send(Request(host=host, target="server")))
+    net_send(ws.send(Request(host=host, target="/")))
     net_recv()
     for event in ws.handshake.events():
         if isinstance(event, AcceptConnection):

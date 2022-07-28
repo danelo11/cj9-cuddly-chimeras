@@ -19,7 +19,9 @@ player = pyglet.shapes.Rectangle(
 player_speed = np.zeros((2,), dtype=float)
 pixels_per_second = 500
 
-host, port = "localhost", 8765
+# host, port = "ws.ifelse.io", 80
+# host, port = "dopad.herokuapp.com", 80
+host, port = "dopad.herokuapp.com", 443
 
 
 @window.event
@@ -86,6 +88,7 @@ def on_key_release(symbol, modifiers):
 
 def main():
     ws.setup(host, port)
+    ws.send('{"type": "name", "data": "123"}')
 
     pyglet.clock.schedule_interval(update, 1/60)
     pyglet.clock.schedule_interval(network_update, 1/60)
