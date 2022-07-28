@@ -1,8 +1,10 @@
+import json
+import logging
 import select
 
 import numpy as np
 import pyglet
-from wsproto.events import CloseConnection, Message
+from wsproto.events import CloseConnection, Message, Ping, Pong
 
 from bughunt import logging_setup, ws
 
@@ -19,8 +21,6 @@ player = pyglet.shapes.Rectangle(
 player_speed = np.zeros((2,), dtype=float)
 pixels_per_second = 500
 
-# host, port = "ws.ifelse.io", 80
-# host, port = "dopad.herokuapp.com", 80
 host, port = "dopad.herokuapp.com", 443
 
 
@@ -45,7 +45,7 @@ def update(dt):
         if player.y > window.height - player.height:
             player.y = window.height - player.height
 
-        ws.send(str(player.x) + "," + str(player.y))
+        ws.send(json.dumps({"type": "text", "data": f"{player.x}, {player.y}"}))
 
 
 def network_update(_dt):
@@ -58,6 +58,10 @@ def network_update(_dt):
             print(network_event.data)
         elif isinstance(network_event, CloseConnection):
             ws.setup(host, port)
+        elif isinstance(network_event, Ping):
+            ws.net_send(ws.ws.send(Pong(network_event.payload)))
+        else:
+            logging.warn(f"Unknown network event: {network_event}")
 
 
 @window.event
@@ -89,7 +93,7 @@ def on_key_release(symbol, modifiers):
 def main():
     logging_setup()
     ws.setup(host, port)
-    ws.send('{"type": "name", "data": "123"}')
+    ws.send(json.dumps({"type": "name", "data": "player_pos"}))
 
     pyglet.clock.schedule_interval(update, 1/60)
     pyglet.clock.schedule_interval(network_update, 1/60)
