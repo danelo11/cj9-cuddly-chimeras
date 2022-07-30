@@ -20,27 +20,6 @@ class BugHuntServer():
 
     def run(self):
         """Run the game."""
-        self.game_window = pyglet.window.Window(800, 600)
-        self.main_batch = pyglet.graphics.Batch()
-        self.score_label = pyglet.text.Label(text="Score: 0", x=10, y=575, batch=self.main_batch)
-        self.level_label = pyglet.text.Label(
-            text="Version 5: It's a Game!",
-            x=400,
-            y=575,
-            anchor_x='center',
-            batch=self.main_batch
-        )
-
-        self.game_over_label = pyglet.text.Label(
-            text="GAME OVER",
-            x=400,
-            y=-300,
-            anchor_x='center',
-            batch=self.main_batch,
-            font_size=48
-        )
-
-        self.counter = pyglet.window.FPSDisplay(window=self.game_window)
         self.player_ship = None
         self.player_lives = []
         self.score = 0
@@ -50,19 +29,11 @@ class BugHuntServer():
         # every time we reset the level.
         self.event_stack_size = 0
 
-        @self.game_window.event
-        def on_draw():
-            # here we want to send the state of the game to the client
-            self.game_window.clear()
-            self.main_batch.draw()
-            self.counter.draw()
-
     def init(self):
         """Init the game."""
         self.score = 0
-        self.score_label.text = "Score: " + str(self.score)
         self.num_bugs = 3
-        self.player_ship = PlayerServer(x=400, y=300, batch=self.main_batch)
+        self.player_ship = PlayerServer(x=400, y=300)
 
     def update(self, dt):
         """Update the game."""
@@ -115,4 +86,7 @@ def main():
     server.init()
     threading.Thread(target=network_thread, daemon=True, kwargs={"handler": server.handler}).start()
     pyglet.clock.schedule_interval(server.update, 1/120.0)
-    pyglet.app.run()
+
+
+if __name__ == "__main__":
+    main()

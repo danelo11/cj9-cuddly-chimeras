@@ -1,11 +1,16 @@
 """Module."""
+import asyncio
 import logging
+import threading
 from dataclasses import dataclass
 from queue import Empty, SimpleQueue
+from typing import Callable
 
 import pyglet
+import websockets
 from pyglet.window import key
 
+from bughunt import logging_setup
 from bughunt.clientside.player import PlayerClient
 from bughunt.utils import State
 
@@ -98,15 +103,50 @@ class BugHuntClient():
         # TODO complete this with the rest of the actions
         ...
 
+    async def handler(self, websocket):
+        """Handler.
+
+        Handles the websocket connection and retrieve and push to the queue.
+        """
+        while True:
+            msg = await websocket.recv()
+            logging.info(msg)
+            # try:
+            #     new_state = self.state_queue.get(block=False)
+            # except Empty:
+            #     new_state = None
+            # try:
+            #     actions = self.action_queue.get(block=False)
+            # except Empty:
+            #     actions = None
+            await websocket.send(msg)
+
+
+def network_thread(handler: Callable, host: str, port: int):
+    """Network thread."""
+    async def handle_network():
+        """Handle network."""
+        async with websockets.connect(f"ws://{host}:{port}") as websocket:
+            await websocket.send("Hello world!")
+            response = await websocket.recv()
+            logging.info(response)
+    asyncio.run(handle_network())
+
 
 def main():
     """Main function."""
-    logging.basicConfig(level=logging.INFO)
+    logging_setup()
     logging.info("Main.")
     client = BugHuntClient()
     # Start it up!
     client.run()
     client.init()
+    host, port = ('localhost', 8765)
+    threading.Thread(target=network_thread, daemon=True, kwargs={
+        "handler": client.handler,
+        "host": host,
+        "port": port
+    }).start()
     pyglet.clock.schedule_interval(client.update_state, 1/120.0)
     pyglet.app.run()
 

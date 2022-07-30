@@ -3,7 +3,7 @@ import logging
 
 import pyglet
 
-from bughunt.core import util
+from bughunt import utils as util
 
 
 class PhysicalObject(pyglet.sprite.Sprite):
