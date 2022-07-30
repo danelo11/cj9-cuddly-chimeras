@@ -11,6 +11,7 @@ import websockets
 from pyglet.window import key
 
 from bughunt import logging_setup
+from bughunt.clientside.maze import Maze
 from bughunt.clientside.player import PlayerClient
 from bughunt.utils import State
 
@@ -55,6 +56,7 @@ class BugHuntClient():
 
         self.counter = pyglet.window.FPSDisplay(window=self.game_window)
         self.keyboard = key.KeyStateHandler()
+        self.maze = Maze(x=415, y=280, batch=self.main_batch)
         self.player_ship = None
         self.player_lives = []
         self.score = 0
