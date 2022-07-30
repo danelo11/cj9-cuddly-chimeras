@@ -15,7 +15,7 @@ class BugHuntClientState(State):
     """BugHunt Client State."""
 
     score: int = 0
-    num_asteroids: int = 3
+    num_bugs: int = 3
     player_lives: int = 3
 
 
@@ -53,7 +53,7 @@ class BugHuntClient():
         self.player_ship = None
         self.player_lives = []
         self.score = 0
-        self.num_asteroids = 3
+        self.num_bugs = 3
         self.game_objects = []
         # We need to pop off as many event stack frames as we pushed on
         # every time we reset the level.
@@ -70,7 +70,7 @@ class BugHuntClient():
         """Init the game."""
         self.score = 0
         self.score_label.text = "Score: " + str(self.score)
-        self.num_asteroids = 3
+        self.num_bugs = 3
         self.player_ship = PlayerClient(x=400, y=300, batch=self.main_batch)
         self.game_objects = [self.player_ship]
         self.game_window.push_handlers(self.keyboard)

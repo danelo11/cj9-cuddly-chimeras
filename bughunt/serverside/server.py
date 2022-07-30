@@ -11,8 +11,8 @@ import websockets
 from bughunt.serverside.player import PlayerServer
 
 
-class AsteroidServer():
-    """Asteroid Server."""
+class BugHuntServer():
+    """BugHunt Server."""
 
     def __init__(self):
         self.action_queue = SimpleQueue()
@@ -44,7 +44,7 @@ class AsteroidServer():
         self.player_ship = None
         self.player_lives = []
         self.score = 0
-        self.num_asteroids = 3
+        self.num_bugs = 3
         self.game_objects = []
         # We need to pop off as many event stack frames as we pushed on
         # every time we reset the level.
@@ -61,7 +61,7 @@ class AsteroidServer():
         """Init the game."""
         self.score = 0
         self.score_label.text = "Score: " + str(self.score)
-        self.num_asteroids = 3
+        self.num_bugs = 3
         self.player_ship = PlayerServer(x=400, y=300, batch=self.main_batch)
 
     def update(self, dt):
@@ -110,7 +110,7 @@ def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
-    server = AsteroidServer()
+    server = BugHuntServer()
     server.run()
     server.init()
     threading.Thread(target=network_thread, daemon=True, kwargs={"handler": server.handler}).start()
