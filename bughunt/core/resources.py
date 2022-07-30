@@ -19,7 +19,9 @@ pyglet.resource.reindex()
 print(pyglet.resource._default_loader._index)
 # Load the three main resources and get them to draw centered
 player_image = pyglet.resource.image("player.png")
+maze_img = pyglet.resource.image('maze.png')
 center_image(player_image)
+center_image(maze_img)
 
 
 def main():
