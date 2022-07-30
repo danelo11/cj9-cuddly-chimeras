@@ -1,8 +1,12 @@
 """Module."""
+import asyncio
 import logging
+import threading
 from queue import Empty, SimpleQueue
+from typing import Callable
 
 import pyglet
+import websockets
 
 from multiplayer_asteroid.server.player import PlayerServer
 
@@ -12,6 +16,7 @@ class AsteroidServer():
 
     def __init__(self):
         self.action_queue = SimpleQueue()
+        self.state_queue = SimpleQueue()
 
     def run(self):
         """Run the game."""
@@ -73,16 +78,42 @@ class AsteroidServer():
         # TODO: update game objects from the new actions
         # TODO: create new states for the game objects
 
+    async def handler(self, websocket):
+        """Handler.
+
+        Handles the websocket connection and retrieve and push to the queue.
+        """
+        while True:
+            msg = await websocket.recv()
+            logging.info(msg)
+            # try:
+            #     actions = self.action_queue.get(block=False)
+            # except Empty:
+            #     actions = None
+            # try:
+            #     new_state = self.state_queue.get(block=False)
+            # except Empty:
+            #     new_state = None
+            await websocket.send(msg)
+
+
+def network_thread(handler: Callable):
+    """Network thread."""
+    async def handle_network():
+        """Handle network."""
+        async with websockets.serve(handler, "localhost", 8765):
+            await asyncio.Future()
+    asyncio.run(handle_network())
+
 
 def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
     server = AsteroidServer()
-    # Start it up!
     server.run()
     server.init()
-
+    threading.Thread(target=network_thread, daemon=True, kwargs={"handler": server.handler}).start()
     pyglet.clock.schedule_interval(server.update, 1/120.0)
     pyglet.app.run()
 

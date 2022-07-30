@@ -24,6 +24,7 @@ class AsteroidClient():
 
     def __init__(self):
         self.state_queue = SimpleQueue()
+        self.action_queue = SimpleQueue()
 
     def run(self):
         """Run the game."""
