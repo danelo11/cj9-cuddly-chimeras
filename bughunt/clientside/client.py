@@ -127,9 +127,10 @@ def network_thread(handler: Callable, host: str, port: int):
     async def handle_network():
         """Handle network."""
         async with websockets.connect(f"ws://{host}:{port}") as websocket:
-            await websocket.send("Hello world!")
-            response = await websocket.recv()
-            logging.info(response)
+            async for message in websocket:
+                logging.info(message)
+                await websocket.send("Hello world!")
+
     asyncio.run(handle_network())
 
 
