@@ -3,6 +3,7 @@ import asyncio
 import logging
 import random
 from dataclasses import dataclass
+from queue import SimpleQueue
 from select import select
 
 import pyglet
@@ -28,10 +29,12 @@ class BugHuntClientState(State):
 class BugHuntClient():
     """BugHunt Client."""
 
-    def __init__(self):
-        self.state_queue = asyncio.Queue()
-        self.action_queue = asyncio.Queue()
+    def __init__(self, host: str, port: int):
+        self.state_queue = SimpleQueue()
+        self.action_queue = SimpleQueue()
         self.name: int = random.randrange(1, 1e6)
+        self.host = host
+        self.port = port
 
     def run(self):
         """Run the game."""
@@ -120,10 +123,11 @@ class BugHuntClient():
             if isinstance(event, Message):
                 # TODO: parse events
                 logging.info(f"Message received: {event.data}")
+                self.state_queue.put(event.data)
             elif isinstance(event, CloseConnection):
                 # Reopen the connection
                 ws_client.close()
-                ws_client = ws.WebSocketClient(host, port)
+                ws_client = ws.WebSocketClient(self.host, self.port)
             elif isinstance(event, Ping):
                 # Send a pong reply
                 ws_client.send(Pong(event.payload))
@@ -134,20 +138,19 @@ class BugHuntClient():
 
 def main():
     """Main function."""
-    global ws_client, host, port
+    global ws_client
 
     logging_setup()
     logging.info("Main.")
     Resources()
-    client = BugHuntClient()
+    client = BugHuntClient('localhost', 8765)
     # Start the client
     client.run()
     client.init()
 
     # Setup the websocket client
-    host, port = ('localhost', 8765)
-    ws_client = ws.WebSocketClient(host, port)
-    logging.info(f"Connecting to {host}:{port}")
+    ws_client = ws.WebSocketClient(client.host, client.port)
+    logging.info(f"Connecting to {client.host}:{client.port}")
 
     # Start the main loop
     fps = 120.0
