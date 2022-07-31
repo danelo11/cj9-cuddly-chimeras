@@ -3,6 +3,7 @@ import logging
 import pathlib
 from dataclasses import dataclass, field
 
+import numpy as np
 import pyglet
 from PIL import Image
 
@@ -24,7 +25,7 @@ class Map:
     Map data.
     """
 
-    walls: Walls = field(default_factory=lambda: [])
+    array_data: np.array = field(default_factory=lambda: np.array([]))
     width: int = 0
     height: int = 0
 
@@ -56,10 +57,6 @@ class Resources():
         # player_image = pyglet.image.load('player.png')
         return player_image
 
-    def image_data_to_walls_polygons(self, image_data) -> Walls:
-        """Image data to polygons."""
-        return []
-
     def load_map(self, map_filename: pathlib.Path) -> Map:
         """Load map.
 
@@ -69,9 +66,15 @@ class Resources():
         image = image.convert('RGBA')
         # image.show()
         self.logger.info(f"Map image: {image}")
-        walls = self.image_data_to_walls_polygons(image)
-
-        map = Map(walls=walls, width=image.width, height=image.height)
+        threshold = 100
+        # Grayscale
+        image_file = image.convert('L')
+        # Threshold
+        image_file = image_file.point(lambda p: 255 if p > threshold else 0)
+        # To mono
+        image_file = image_file.convert('1')
+        im = np.array(image_file)
+        map = Map(array_data=im, width=image.width, height=image.height)
         return map
 
 
