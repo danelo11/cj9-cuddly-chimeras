@@ -88,23 +88,30 @@ async def periodic(t: float, func: Callable):
 
     Runs the function every t seconds approximately.
     """
+    # Setup some variables
     update_task = None
     start_timer = None
     scheduled_tasks = set()
+
     while await asyncio.sleep(t, result=True):
         if update_task:
             update_task.exception()
             update_task.cancel()
+
+        # Measure the time it takes to loop
         end_timer = time.monotonic() if start_timer else None
         time_elapsed = end_timer - start_timer if end_timer else 0.0
         logging.debug('periodic update %.2f', time_elapsed)
+
+        # Schedule the next update
         update_task = asyncio.create_task(func(time_elapsed))
         scheduled_tasks.add(update_task)
         update_task.add_done_callback(scheduled_tasks.discard)
+
         start_timer = time.monotonic()
 
 
-async def async_main(server, host: str = "localhost", port: int = 8766):
+async def async_main(server, host: str = "localhost", port: int = 8765):
     """Async main."""
     task = asyncio.create_task(periodic(0.1, server.update))
     try:
@@ -119,9 +126,11 @@ def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
+
     server = BugHuntServer()
     server.run()
     server.init()
+
     asyncio.run(async_main(server), debug=True)
     # threading.Thread(target=network_thread, daemon=True, kwargs={"handler": server.handler}).start()
 
