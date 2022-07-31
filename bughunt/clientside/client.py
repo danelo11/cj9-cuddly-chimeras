@@ -1,4 +1,5 @@
 """Module."""
+import json
 import logging
 import random
 from dataclasses import dataclass
@@ -125,6 +126,15 @@ class BugHuntClient():
                 logging.info(f"Ping received: {event.payload}")
             else:
                 logging.warn(f"Unknown event: {event}")
+
+        actions = []
+        while not self.action_queue.empty():
+            try:
+                actions.append(self.action_queue.get(block=False))
+            except Empty:
+                break
+        logging.info(f"Sending actions: {actions}")
+        self.ws_client.send(Message(json.dumps(actions)))
 
 
 def main():
