@@ -1,9 +1,8 @@
 """Module."""
-import asyncio
 import logging
 import random
 from dataclasses import dataclass
-from queue import SimpleQueue
+from queue import Empty, SimpleQueue
 
 import pyglet
 from pyglet.window import key
@@ -90,13 +89,13 @@ class BugHuntClient():
     def update_state(self, dt):
         """Update the game state."""
         try:
-            new_state = self.state_queue.get_nowait()
+            new_state = self.state_queue.get(block=False)
             if new_state:
                 if 'Player' in new_state:
                     self.player_ship.update(new_state['Player'])
                 # parse state into game objects states
                 # update state of game objects
-        except asyncio.QueueEmpty:
+        except Empty:
             pass
         actions = {"player": self.name, "actions": []}
         if self.keyboard[key.X]:
