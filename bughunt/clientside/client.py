@@ -28,12 +28,13 @@ class BugHuntClientState(State):
 class BugHuntClient():
     """BugHunt Client."""
 
-    def __init__(self, host: str, port: int):
+    def __init__(self, host: str, port: int, ws_client: ws.WebSocketClient, name: str):
         self.state_queue = SimpleQueue()
         self.action_queue = SimpleQueue()
-        self.name: int = random.randrange(1, 1e6)
+        self.name: int = name
         self.host = host
         self.port = port
+        self.ws_client = ws_client
 
     def run(self):
         """Run the game."""
@@ -112,24 +113,22 @@ class BugHuntClient():
 
     def network_update(self, _dt):
         """Network update."""
-        global ws_client
-
         # Use select to not block the main thread
-        if ws_client.events():
-            ws_client.recv()
+        if self.ws_client.events():
+            self.ws_client.recv()
 
-        for event in ws_client.events():
+        for event in self.ws_client.events():
             if isinstance(event, Message):
                 # TODO: parse events
                 logging.info(f"Message received: {event.data}")
                 self.state_queue.put(event.data)
             elif isinstance(event, CloseConnection):
                 # Reopen the connection
-                ws_client.close()
-                ws_client = ws.WebSocketClient(self.host, self.port)
+                self.ws_client.close()
+                self.ws_client = ws.WebSocketClient(self.host, self.port)
             elif isinstance(event, Ping):
                 # Send a pong reply
-                ws_client.send(Pong(event.payload))
+                self.ws_client.send(Pong(event.payload))
                 logging.info(f"Ping received: {event.payload}")
             else:
                 logging.warn(f"Unknown event: {event}")
@@ -142,12 +141,13 @@ def main():
     logging_setup()
     logging.info("Main.")
     Resources()
-    client = BugHuntClient()
+    # Setup the websocket client
+    host, port = ("localhost", 8766)
+    ws_client = ws.WebSocketClient(host, port)
+    client = BugHuntClient(host, port, ws_client=ws_client, name=random.randrange(1, 1e6))
     client.run()
     client.init()
 
-    # Setup the websocket client
-    ws_client = ws.WebSocketClient(client.host, client.port)
     logging.info(f"Connecting to {client.host}:{client.port}")
 
     # Start the main loop
