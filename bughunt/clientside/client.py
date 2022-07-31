@@ -3,6 +3,7 @@ import logging
 import random
 from dataclasses import dataclass
 from queue import Empty, SimpleQueue
+from select import select
 
 import pyglet
 from pyglet.window import key
@@ -106,7 +107,7 @@ class BugHuntClient():
     def network_update(self, _dt):
         """Network update."""
         # Use select to not block the main thread
-        if self.ws_client.events():
+        if select([self.ws_client.conn], [], [], 0)[0]:
             self.ws_client.recv()
 
         for event in self.ws_client.events():
