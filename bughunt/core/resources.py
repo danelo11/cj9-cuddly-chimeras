@@ -39,6 +39,13 @@ class Resources():
         # player_image = pyglet.image.load('player.png')
         return player_image
 
+    def load_map(self):
+        """Load map.
+
+        Loads a map image and transforms it to polygons in place of the walls.
+        """
+        ...
+
 
 def main():
     """Main function."""
