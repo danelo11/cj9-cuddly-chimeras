@@ -18,19 +18,38 @@ class PlayerServer:
         map: Map = None
     ):
         # Set some easy-to-tweak constants
-        self.thrust = 300.0
+        self.thrust = 10.0
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.map = map
 
-    def update(self, dt, actions=None):
+    def update(self, dt, actions: dict = None):
         """Update the player."""
-        # Do all the normal physics stuff
-        super(PlayerServer, self).update(dt)
+        if actions is None:
+            return
+        if 'left' in actions:
+            x = self.x - self.thrust * dt
+        if 'right' in actions:
+            x = self.x + self.thrust * dt
+        if 'up' in actions:
+            y = self.y + self.thrust * dt
+        if 'down' in actions:
+            y = self.y - self.thrust * dt
+        if 'a' in actions:
+            x = self.x - self.thrust * dt
+        if 'd' in actions:
+            x = self.x + self.thrust * dt
+        if 'w' in actions:
+            y = self.y + self.thrust * dt
+        if 's' in actions:
+            y = self.y - self.thrust * dt
         # check for collisions with walls
-        self.check_collisions_walls()
+        if self.check_collisions_walls(x, y):
+            return
+        if self.check_out_boundaries(x, y):
+            return
         if key.X in actions:
             self.delete()
 
@@ -42,14 +61,15 @@ class PlayerServer:
 
     def check_collisions_walls(self, x, y):
         """Check for collisions with walls."""
-        if self.x < 0:
-            self.x = 0
-        if self.y < 0:
-            self.y = 0
-        if self.x > self.map.width - self.width:
-            self.x = self.map.width - self.width
-        if self.y > self.map.height - self.height:
-            self.y = self.map.height - self.height
+        if self.map.is_wall(x, y):
+            return True
+        return False
+
+    def check_out_boundaries(self, x, y):
+        """Check for collisions with boundaries."""
+        if self.map.is_out_boundary(x, y):
+            return True
+        return False
 
 
 def main():

@@ -29,6 +29,22 @@ class Map:
     width: int = 0
     height: int = 0
 
+    def is_wall(self, x, y):
+        """Check if the given coordinates are a wall."""
+        return self.array_data[x, y]
+
+    def is_out_boundary(self, x, y):
+        """Check if the given coordinates are out of boundary."""
+        if x < 0.0:
+            return True
+        if x > self.width:
+            return True
+        if y < 0.0:
+            return True
+        if y > self.height:
+            return True
+        return False
+
 
 class Resources():
     """Resources."""
