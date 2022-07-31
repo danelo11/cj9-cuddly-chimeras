@@ -1,4 +1,5 @@
 """Phisical Object."""
+import itertools
 import logging
 
 import pyglet
@@ -9,18 +10,27 @@ from bughunt import utils as util
 class PhysicalObject(pyglet.sprite.Sprite):
     """A sprite with physical properties such as velocity"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, collisions=None, *args, **kwargs):
         super(PhysicalObject, self).__init__(*args, **kwargs)
+
+        # Set collisions
+        if collisions is None:
+            collisions = []
+
+        # Check if the collisions are convex polygons
+        i = 0
+        while i < len(collisions):
+            if not util.is_convex(collisions[i]):
+                logging.error(f"Collision polygon is not convex: {collisions[i]}")
+                collisions.pop(i)
+            else:
+                i += 1
+
+        # Set the convex collision polygons
+        self._collisions = [(i[0], i[1]) for i in collisions]
 
         # In addition to position, we have velocity
         self.velocity_x, self.velocity_y = 0.0, 0.0
-
-        # Flags to toggle collision with bullets
-        self.reacts_to_bullets = True
-        self.is_bullet = False
-
-        # And a flag to remove this objedt from the game_object list
-        self.dead = False
 
         # List of new objects to go in the game_objects list
         self.new_objects = []
@@ -29,50 +39,37 @@ class PhysicalObject(pyglet.sprite.Sprite):
         # Only applies to things with keyboard/mouse input
         self.event_handlers = []
 
+    @property
+    def collisions(self):
+        """Getter for collisions."""
+        return [
+            [
+                (i[0] + self.x + self.anchor_x, i[1] + self.y + self.anchor_y)
+                for i in _collision
+            ]
+            for _collision in self._collisions
+        ]
+
     def update(self, dt):
         """This method should be called every frame."""
         # Update position according to velocity and time
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
 
-        # Wrap around the screen if necessary
-        self.check_bounds()
-
-    def check_bounds(self):
-        """Use the classic Asteroids screen wrapping behavior"""
-        min_x = -self.image.width / 2
-        min_y = -self.image.height / 2
-        max_x = 800 + self.image.width / 2
-        max_y = 600 + self.image.height / 2
-        if self.x < min_x:
-            self.x = max_x
-        elif self.x > max_x:
-            self.x = min_x
-        if self.y < min_y:
-            self.y = max_y
-        elif self.y > max_y:
-            self.y = min_y
-
     def collides_with(self, other_object):
         """Determine if this object collides with another."""
-        # Ignore bullet collisions if we're supposed to
-        if not self.reacts_to_bullets and other_object.is_bullet:
+        # Check if the other object is also a PhysicalObject
+        if not isinstance(other_object, PhysicalObject):
+            logging.error(f"Trying to check collision with non-PhysicalObject: {other_object}")
             return False
-        if self.is_bullet and not other_object.reacts_to_bullets:
-            return False
 
-        # Calculate distnace between object centers that would be a collison,
-        # assuming square resources
-        collision_distance = self.image.width / 2 + other_object.image.width / 2
+        # Loop through all of this and other object's collisions
+        for collision, other_collision in itertools.product(self.collisions, other_object.collisions):
+            # Check if the two polygons overlap
+            if util.convex_polygons_overlap(collision, other_collision):
+                return True
 
-        # Get distance using position tuples
-        actual_distane = util.distance(self.position, other_object.position)
-        return (actual_distane <= collision_distance)
-
-    def handle_collision_with(self, other_object):
-        """Called when this object collides with another object."""
-        if other_object.__class__ is not self.__class__:
-            self.dead = True
+        return False
 
 
 def main():
