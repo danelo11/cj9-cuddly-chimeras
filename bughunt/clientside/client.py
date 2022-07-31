@@ -146,7 +146,7 @@ def main():
     pyglet.clock.schedule_interval(client.network_update, 1/fps)
     pyglet.clock.schedule_interval(client.update_state, 1/fps)
     pyglet.app.run()
-    ws.close()
+    ws_client.close()
 
 
 if __name__ == "__main__":
