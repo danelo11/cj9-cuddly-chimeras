@@ -128,8 +128,6 @@ class BugHuntClient():
 
 def main():
     """Main function."""
-    global ws_client
-
     logging_setup()
     logging.info("Main.")
     Resources()
