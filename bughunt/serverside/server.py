@@ -36,7 +36,7 @@ class BugHuntServer():
 
     async def update(self, dt: float):
         """Update the game."""
-        logging.info(f"queue size: {self.action_queue.qsize()}")
+        logging.debug(f"queue size: {self.action_queue.qsize()}")
         try:
             new_actions = self.action_queue.get_nowait()
             if new_actions:
