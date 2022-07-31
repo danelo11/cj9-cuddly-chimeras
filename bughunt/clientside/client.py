@@ -40,13 +40,6 @@ class BugHuntClient():
         self.game_window = pyglet.window.Window(800, 600)
         self.main_batch = pyglet.graphics.Batch()
         self.score_label = pyglet.text.Label(text="Score: 0", x=10, y=575, batch=self.main_batch)
-        self.level_label = pyglet.text.Label(
-            text="Version 5: It's a Game!",
-            x=400,
-            y=575,
-            anchor_x='center',
-            batch=self.main_batch
-        )
 
         self.game_over_label = pyglet.text.Label(
             text="GAME OVER",
