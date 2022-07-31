@@ -111,7 +111,7 @@ async def periodic(t: float, func: Callable):
         start_timer = time.monotonic()
 
 
-async def async_main(server, host: str = "localhost", port: int = 8765):
+async def async_main(server, host: str = "localhost", port: int = 8766):
     """Async main."""
     task = asyncio.create_task(periodic(0.1, server.update))
     try:
