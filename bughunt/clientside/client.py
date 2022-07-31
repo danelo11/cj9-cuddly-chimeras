@@ -1,9 +1,10 @@
 """Module."""
 import asyncio
+import json
 import logging
+import random
 import threading
 from dataclasses import dataclass
-from queue import Empty, SimpleQueue
 from typing import Callable
 
 import pyglet
@@ -12,6 +13,7 @@ from pyglet.window import key
 
 from bughunt import logging_setup
 from bughunt.clientside.player import PlayerClient
+from bughunt.core.resources import Resources
 from bughunt.utils import State
 
 
@@ -28,8 +30,9 @@ class BugHuntClient():
     """BugHunt Client."""
 
     def __init__(self):
-        self.state_queue = SimpleQueue()
-        self.action_queue = SimpleQueue()
+        self.state_queue = asyncio.Queue()
+        self.action_queue = asyncio.Queue()
+        self.name: int = random.randrange(1, 1e6)
 
     def run(self):
         """Run the game."""
@@ -84,65 +87,128 @@ class BugHuntClient():
     def update_state(self, dt):
         """Update the game state."""
         try:
-            new_state = self.state_queue.get(block=False)
+            new_state = self.state_queue.get_nowait()
             if new_state:
                 if 'Player' in new_state:
                     self.player_ship.update(new_state['Player'])
                 # parse state into game objects states
                 # update state of game objects
-        except Empty:
+        except asyncio.QueueEmpty:
             pass
+        actions = {"player": self.name, "actions": []}
         if self.keyboard[key.X]:
-            # TODO: send action to server
             logging.info("X pressed")
-            ...
+            actions["actions"].append(key.X)
         if self.keyboard[key.SPACE]:
-            # TODO: send action to server
             logging.info("SPACE pressed")
-            ...
+            actions["actions"].append(key.SPACE)
         # TODO complete this with the rest of the actions
         ...
+        if actions['actions']:
+            self.action_queue.put_nowait(actions)
+            logging.info(f"appending actions: {actions}, size: {self.action_queue.qsize()}")
 
-    async def handler(self, websocket):
+    async def handler(self, websocket, loop: asyncio.AbstractEventLoop):
         """Handler.
 
         Handles the websocket connection and retrieve and push to the queue.
         """
+        # task_state = asyncio.Task(self.handle_state(websocket))
+        # task_actions = asyncio.Task(self.handle_actions(websocket))
+        logging.info("handling...")
+        # consumer_task = asyncio.Task(self.handle_state(websocket), loop=loop)
+        # producer_task = asyncio.Task(self.handle_actions(websocket), loop=loop)
+        # logging.info(consumer_task)
+        # logging.info(producer_task)
+        # await loop.gather(self.handle_state(websocket), self.handle_actions(websocket))
+        logging.info(f"asyncio running loop: {asyncio.events.get_running_loop()}, loop: {loop}")
+        # state_future = asyncio.run_coroutine_threadsafe(self.handle_state(websocket), loop)
+        # loop.call_soon_threadsafe(self.handle_state(websocket))
+        # actions_future = asyncio.run_coroutine_threadsafe(self.handle_actions(websocket), loop)
+        # try:
+        #     loop.run_forever()
+        # finally:
+        #     loop.close()
+        # done, futures = await asyncio.wait([state_future, actions_future], return_when=asyncio.FIRST_COMPLETED)
+        task_state = asyncio.create_task(self.handle_state(websocket))
+        task_actions = asyncio.create_task(self.handle_actions(websocket))
+        asyncio.gather(task_state, task_actions)
+        # logging.info( asyncio.all_tasks(loop=loop))
+
+    async def handle_state(self, websocket):
+        """Handle state.
+
+        Handles the websocket connection and retrieve and push to the queue.
+        """
+        logging.info("waiting for state to receive...")
+        async for msg_state in websocket:
+            logging.info(f"client recv: {msg_state}")
+            self.state_queue.put_nowait(msg_state)
+        # try:
+        #     msg_state = await websocket.recv()
+        # except websockets.ConnectionClosedOK:
+        #     logging.info("Connection closed")
+        #     msg_state = None
+
+        # parse msg_state?
+        # self.state_queue.put(msg_state)
+
+    async def handle_actions(self, websocket):
+        """Handle actions."""
+        logging.info(f"Waiting for actions to send..., {self.action_queue.qsize()}")
         while True:
-            msg = await websocket.recv()
-            logging.info(msg)
-            # try:
-            #     new_state = self.state_queue.get(block=False)
-            # except Empty:
-            #     new_state = None
-            # try:
-            #     actions = self.action_queue.get(block=False)
-            # except Empty:
-            #     actions = None
-            await websocket.send(msg)
+            try:
+                logging.info("getting action...")
+                actions = await self.action_queue.get()
+            except asyncio.QueueEmpty:
+                continue
+            if actions:
+                logging.info("Sending actions: %s", actions)
+                await websocket.send(json.dumps(actions))
+
+        # while not self.action_queue.empty():
+        #     try:
+        #         actions = self.action_queue.get(block=False)
+        #     except Empty:
+        #         break
+        #     if actions:
+        #         logging.info("Sending actions: %s", actions)
+        #         await websocket.send(json.dumps(actions))
 
 
 def network_thread(handler: Callable, host: str, port: int):
     """Network thread."""
-    async def handle_network():
+    async def handle_network(loop: asyncio.AbstractEventLoop):
         """Handle network."""
-        async with websockets.connect(f"ws://{host}:{port}") as websocket:
-            async for message in websocket:
-                logging.info(message)
-                await websocket.send("Hello world!")
-
-    asyncio.run(handle_network())
+        logging.info("Connecting to %s:%s", host, port)
+        async for websocket in websockets.connect(f"ws://{host}:{port}"):
+            logging.info("Connected")
+            try:
+                task = loop.create_task(handler(websocket, loop))
+                await task
+            except websockets.ConnectionClosed:
+                logging.info("Connection closed")
+                task.cancel()
+                continue
+        logging.info("Disconnected")
+    loop = asyncio.new_event_loop()
+    # loop.set_debug(True)
+    logging.info("starting network thread, loop: %s", loop)
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(handle_network(loop))
+    loop.run_forever()
+    loop.close()
 
 
 def main():
     """Main function."""
     logging_setup()
     logging.info("Main.")
+    Resources()
     client = BugHuntClient()
-    # Start it up!
     client.run()
     client.init()
-    host, port = ('localhost', 8765)
+    host, port = ('localhost', 8766)
     threading.Thread(target=network_thread, daemon=True, kwargs={
         "handler": client.handler,
         "host": host,

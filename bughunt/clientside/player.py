@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import pyglet
 from pyglet.window import key
 
-from bughunt.core import resources
+from bughunt.core.resources import Resources
 from bughunt.utils import SpriteState, State
 
 
@@ -20,7 +20,7 @@ class PlayerClient(pyglet.sprite.Sprite):
     """PlayerClient."""
 
     def __init__(self, *args, **kwargs):
-        super(PlayerClient, self).__init__(img=resources.player_image, *args, **kwargs)
+        super(PlayerClient, self).__init__(img=Resources().player_image(), *args, **kwargs)
         self.state = PlayerState()
         # Let pyglet handle keyboard events for us
         self.key_handler = key.KeyStateHandler()

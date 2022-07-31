@@ -1,6 +1,7 @@
 """Resources."""
 import logging
 import os
+import pathlib
 
 import pyglet
 
@@ -11,15 +12,30 @@ def center_image(image):
     image.anchor_y = image.height / 2
 
 
-# Tell pyglet where to find the resources
-print(pyglet.resource._default_loader._script_home)
-print(pyglet.resource._default_loader._index)
-pyglet.resource.path = ['..\\resources']
-pyglet.resource.reindex()
-print(pyglet.resource._default_loader._index)
-# Load the three main resources and get them to draw centered
-player_image = pyglet.resource.image("player.png")
-center_image(player_image)
+class Resources():
+    """Resources."""
+
+    def __init__(self):
+        self.resource_path = pathlib.Path(__file__).parent.parent.parent.absolute()
+        self.resource_path = self.resource_path / 'resources'
+        self.image_path = self.resource_path / 'images'
+        self.sound_path = self.resource_path / 'sounds'
+        self.font_path = self.resource_path / 'fonts'
+        self.music_path = self.resource_path / 'music'
+        self.logger = logging.getLogger(__name__)
+        logging.info(f"Resources: {self.resource_path}")
+        pyglet.resource.path = [str(self.resource_path.absolute())]
+        pyglet.resource.reindex()
+        self.logger.info('Resources initialized')
+        print(pyglet.resource._default_loader._script_home)
+        print(pyglet.resource._default_loader._index)
+
+    def player_image(self):
+        """Player image."""
+        player_image = pyglet.resource.image('player.png')
+        center_image(player_image)
+        # player_image = pyglet.image.load('player.png')
+        return player_image
 
 
 def main():

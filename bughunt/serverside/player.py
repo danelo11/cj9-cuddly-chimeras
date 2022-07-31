@@ -3,7 +3,7 @@ import logging
 
 from pyglet.window import key
 
-from bughunt.core import resources
+from bughunt.core.resources import Resources
 from bughunt.engine import physicalobject
 
 
@@ -11,7 +11,7 @@ class PlayerServer(physicalobject.PhysicalObject):
     """Physical object that responds to user input"""
 
     def __init__(self, *args, **kwargs):
-        super(PlayerServer, self).__init__(img=resources.player_image, *args, **kwargs)
+        super(PlayerServer, self).__init__(img=Resources().player_image(), *args, **kwargs)
 
         # Set some easy-to-tweak constants
         self.thrust = 300.0
