@@ -115,27 +115,11 @@ class BugHuntClient():
 
         Handles the websocket connection and retrieve and push to the queue.
         """
-        # task_state = asyncio.Task(self.handle_state(websocket))
-        # task_actions = asyncio.Task(self.handle_actions(websocket))
         logging.info("handling...")
-        # consumer_task = asyncio.Task(self.handle_state(websocket), loop=loop)
-        # producer_task = asyncio.Task(self.handle_actions(websocket), loop=loop)
-        # logging.info(consumer_task)
-        # logging.info(producer_task)
-        # await loop.gather(self.handle_state(websocket), self.handle_actions(websocket))
         logging.info(f"asyncio running loop: {asyncio.events.get_running_loop()}, loop: {loop}")
-        # state_future = asyncio.run_coroutine_threadsafe(self.handle_state(websocket), loop)
-        # loop.call_soon_threadsafe(self.handle_state(websocket))
-        # actions_future = asyncio.run_coroutine_threadsafe(self.handle_actions(websocket), loop)
-        # try:
-        #     loop.run_forever()
-        # finally:
-        #     loop.close()
-        # done, futures = await asyncio.wait([state_future, actions_future], return_when=asyncio.FIRST_COMPLETED)
         task_state = asyncio.create_task(self.handle_state(websocket))
         task_actions = asyncio.create_task(self.handle_actions(websocket))
         asyncio.gather(task_state, task_actions)
-        # logging.info( asyncio.all_tasks(loop=loop))
 
     async def handle_state(self, websocket):
         """Handle state.
@@ -146,14 +130,6 @@ class BugHuntClient():
         async for msg_state in websocket:
             logging.info(f"client recv: {msg_state}")
             self.state_queue.put_nowait(msg_state)
-        # try:
-        #     msg_state = await websocket.recv()
-        # except websockets.ConnectionClosedOK:
-        #     logging.info("Connection closed")
-        #     msg_state = None
-
-        # parse msg_state?
-        # self.state_queue.put(msg_state)
 
     async def handle_actions(self, websocket):
         """Handle actions."""
@@ -167,15 +143,6 @@ class BugHuntClient():
             if actions:
                 logging.info("Sending actions: %s", actions)
                 await websocket.send(json.dumps(actions))
-
-        # while not self.action_queue.empty():
-        #     try:
-        #         actions = self.action_queue.get(block=False)
-        #     except Empty:
-        #         break
-        #     if actions:
-        #         logging.info("Sending actions: %s", actions)
-        #         await websocket.send(json.dumps(actions))
 
 
 def network_thread(handler: Callable, host: str, port: int):

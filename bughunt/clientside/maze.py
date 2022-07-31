@@ -3,14 +3,14 @@ import logging
 
 import pyglet
 
-from bughunt.core import resources
+from bughunt.core.resources import Resources
 
 
 class Maze(pyglet.sprite.Sprite):
     """Maze."""
 
     def __init__(self, *args, **kwargs):
-        super(Maze, self).__init__(img=resources.maze_img, *args, **kwargs)
+        super(Maze, self).__init__(img=Resources().maze_img, *args, **kwargs)
 
     def update(self):
         """Update Maze"""

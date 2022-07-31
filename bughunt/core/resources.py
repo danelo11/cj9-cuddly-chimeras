@@ -29,6 +29,7 @@ class Resources():
         self.logger.info('Resources initialized')
         print(pyglet.resource._default_loader._script_home)
         print(pyglet.resource._default_loader._index)
+        self.maze_img = pyglet.resource.image('maze.png')
 
     def player_image(self):
         """Player image."""
