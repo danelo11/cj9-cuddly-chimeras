@@ -1,7 +1,8 @@
 """Module."""
+import asyncio
 import logging
+import random
 from dataclasses import dataclass
-from queue import Empty, SimpleQueue
 from select import select
 
 import pyglet
@@ -11,6 +12,7 @@ from wsproto.events import CloseConnection, Message, Ping, Pong
 from bughunt import logging_setup, ws
 from bughunt.clientside.maze import Maze
 from bughunt.clientside.player import PlayerClient
+from bughunt.core.resources import Resources
 from bughunt.utils import State
 
 
@@ -27,8 +29,9 @@ class BugHuntClient():
     """BugHunt Client."""
 
     def __init__(self):
-        self.state_queue = SimpleQueue()
-        self.action_queue = SimpleQueue()
+        self.state_queue = asyncio.Queue()
+        self.action_queue = asyncio.Queue()
+        self.name: int = random.randrange(1, 1e6)
 
     def run(self):
         """Run the game."""
@@ -84,24 +87,26 @@ class BugHuntClient():
     def update_state(self, dt):
         """Update the game state."""
         try:
-            new_state = self.state_queue.get(block=False)
+            new_state = self.state_queue.get_nowait()
             if new_state:
                 if 'Player' in new_state:
                     self.player_ship.update(new_state['Player'])
                 # parse state into game objects states
                 # update state of game objects
-        except Empty:
+        except asyncio.QueueEmpty:
             pass
+        actions = {"player": self.name, "actions": []}
         if self.keyboard[key.X]:
-            # TODO: send action to server
             logging.info("X pressed")
-            ...
+            actions["actions"].append(key.X)
         if self.keyboard[key.SPACE]:
-            # TODO: send action to server
             logging.info("SPACE pressed")
-            ...
+            actions["actions"].append(key.SPACE)
         # TODO complete this with the rest of the actions
         ...
+        if actions['actions']:
+            self.action_queue.put_nowait(actions)
+            logging.info(f"appending actions: {actions}, size: {self.action_queue.qsize()}")
 
     def network_update(self, _dt):
         """Network update."""
@@ -133,6 +138,7 @@ def main():
 
     logging_setup()
     logging.info("Main.")
+    Resources()
     client = BugHuntClient()
     # Start the client
     client.run()
