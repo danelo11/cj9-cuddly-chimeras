@@ -144,11 +144,11 @@ def main():
     # Setup the websocket client
     host, port = ("localhost", 8766)
     ws_client = ws.WebSocketClient(host, port)
+    logging.info(f"Connecting to {host}:{port}")
+
     client = BugHuntClient(host, port, ws_client=ws_client, name=random.randrange(1, 1e6))
     client.run()
     client.init()
-
-    logging.info(f"Connecting to {client.host}:{client.port}")
 
     # Start the main loop
     fps = 120.0
