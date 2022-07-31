@@ -1,15 +1,32 @@
 """Resources."""
 import logging
-import os
 import pathlib
+from dataclasses import dataclass, field
 
 import pyglet
+from PIL import Image
 
 
 def center_image(image):
     """Sets an image's anchor point to its center"""
     image.anchor_x = image.width / 2
     image.anchor_y = image.height / 2
+
+
+# Walls Polygons
+Walls = list[list[tuple[int, int]]]
+
+
+@dataclass
+class Map:
+    """Map.
+
+    Map data.
+    """
+
+    walls: Walls = field(default_factory=lambda: [])
+    width: int = 0
+    height: int = 0
 
 
 class Resources():
@@ -39,21 +56,31 @@ class Resources():
         # player_image = pyglet.image.load('player.png')
         return player_image
 
-    def load_map(self):
+    def image_data_to_walls_polygons(self, image_data) -> Walls:
+        """Image data to polygons."""
+        return []
+
+    def load_map(self, map_filename: pathlib.Path) -> Map:
         """Load map.
 
         Loads a map image and transforms it to polygons in place of the walls.
         """
-        ...
+        image = Image.open(self.resource_path / map_filename)
+        image = image.convert('RGBA')
+        # image.show()
+        self.logger.info(f"Map image: {image}")
+        walls = self.image_data_to_walls_polygons(image)
+
+        map = Map(walls=walls, width=image.width, height=image.height)
+        return map
 
 
 def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
-    pyglet.resource.path = ['.\\pygletexample\\resources']
-    pyglet.resource.reindex()
-    os.walk(pyglet.resource.path)
+    resources = Resources()
+    resources.load_map('maze.png')
 
 
 if __name__ == "__main__":
