@@ -1,9 +1,7 @@
 """Module."""
 import asyncio
-import json
 import logging
 import random
-import select
 from dataclasses import dataclass
 from queue import SimpleQueue
 
@@ -112,38 +110,50 @@ class BugHuntClient():
             self.action_queue.put_nowait(actions)
             logging.info(f"appending actions: {actions}, size: {self.action_queue.qsize()}")
 
-    def network_thread(self, dt: float):
-        """Network thread."""
-        ready = select.select([ws.conn], [], [], 0)
-        if ready[0]:
-            ws.net_recv()
+    def network_update(self, _dt):
+        """Network update."""
+        global ws_client
 
-        for network_event in ws.ws.events():
-            if isinstance(network_event, Message):
-                logging.info(network_event.data)
-                self.state_queue.put(network_event.data)
-            elif isinstance(network_event, CloseConnection):
-                ws.setup(self.host, self.port)
-            elif isinstance(network_event, Ping):
-                ws.net_send(ws.ws.send(Pong(network_event.payload)))
+        # Use select to not block the main thread
+        if ws_client.events():
+            ws_client.recv()
+
+        for event in ws_client.events():
+            if isinstance(event, Message):
+                # TODO: parse events
+                logging.info(f"Message received: {event.data}")
+                self.state_queue.put(event.data)
+            elif isinstance(event, CloseConnection):
+                # Reopen the connection
+                ws_client.close()
+                ws_client = ws.WebSocketClient(self.host, self.port)
+            elif isinstance(event, Ping):
+                # Send a pong reply
+                ws_client.send(Pong(event.payload))
+                logging.info(f"Ping received: {event.payload}")
             else:
-                logging.warn(f"Unknown network event: {network_event}")
+                logging.warn(f"Unknown event: {event}")
 
 
 def main():
     """Main function."""
+    global ws_client
+
     logging_setup()
     logging.info("Main.")
     Resources()
-    host, port = ('localhost', 8766)
-    ws.setup(host, port)
-    ws.send(json.dumps({"type": "name", "data": "player_pos"}))
-    client = BugHuntClient(host, port)
+    client = BugHuntClient()
     client.run()
     client.init()
 
-    pyglet.clock.schedule_interval(client.update_state, 1/120.0)
-    pyglet.clock.schedule_interval(client.network_thread, 1/60)
+    # Setup the websocket client
+    ws_client = ws.WebSocketClient(client.host, client.port)
+    logging.info(f"Connecting to {client.host}:{client.port}")
+
+    # Start the main loop
+    fps = 120.0
+    pyglet.clock.schedule_interval(client.network_update, 1/fps)
+    pyglet.clock.schedule_interval(client.update_state, 1/fps)
     pyglet.app.run()
     ws.close()
 
