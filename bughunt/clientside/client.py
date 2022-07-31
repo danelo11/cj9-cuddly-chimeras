@@ -93,6 +93,7 @@ class BugHuntClient():
         except Empty:
             pass
         actions = {"player": self.name, "actions": []}
+
         if self.keyboard[key.X]:
             logging.info("X pressed")
             actions["actions"].append(key.X)
@@ -101,6 +102,7 @@ class BugHuntClient():
             actions["actions"].append(key.SPACE)
         # TODO complete this with the rest of the actions
         ...
+
         if actions['actions']:
             self.action_queue.put_nowait(actions)
             logging.info(f"appending actions: {actions}, size: {self.action_queue.qsize()}")
@@ -133,8 +135,9 @@ class BugHuntClient():
                 actions.append(self.action_queue.get(block=False))
             except Empty:
                 break
-        logging.info(f"Sending actions: {actions}")
-        self.ws_client.send(Message(json.dumps(actions)))
+        if actions:
+            logging.info(f"Sending actions: {actions}")
+            self.ws_client.send(Message(json.dumps(actions)))
 
 
 def main():
