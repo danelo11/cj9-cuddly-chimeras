@@ -3,15 +3,15 @@ import asyncio
 import json
 import logging
 import random
-import threading
+import select
 from dataclasses import dataclass
-from typing import Callable
+from queue import SimpleQueue
 
 import pyglet
-import websockets
 from pyglet.window import key
+from wsproto.events import CloseConnection, Message, Ping, Pong
 
-from bughunt import logging_setup
+from bughunt import logging_setup, ws
 from bughunt.clientside.maze import Maze
 from bughunt.clientside.player import PlayerClient
 from bughunt.core.resources import Resources
@@ -30,10 +30,12 @@ class BugHuntClientState(State):
 class BugHuntClient():
     """BugHunt Client."""
 
-    def __init__(self):
-        self.state_queue = asyncio.Queue()
-        self.action_queue = asyncio.Queue()
+    def __init__(self, host: str, port: int):
+        self.state_queue = SimpleQueue()
+        self.action_queue = SimpleQueue()
         self.name: int = random.randrange(1, 1e6)
+        self.host = host
+        self.port = port
 
     def run(self):
         """Run the game."""
@@ -110,63 +112,22 @@ class BugHuntClient():
             self.action_queue.put_nowait(actions)
             logging.info(f"appending actions: {actions}, size: {self.action_queue.qsize()}")
 
-    async def handler(self, websocket, loop: asyncio.AbstractEventLoop):
-        """Handler.
+    def network_thread(self, dt: float):
+        """Network thread."""
+        ready = select.select([ws.conn], [], [], 0)
+        if ready[0]:
+            ws.net_recv()
 
-        Handles the websocket connection and retrieve and push to the queue.
-        """
-        logging.info("handling...")
-        logging.info(f"asyncio running loop: {asyncio.events.get_running_loop()}, loop: {loop}")
-        task_state = asyncio.create_task(self.handle_state(websocket))
-        task_actions = asyncio.create_task(self.handle_actions(websocket))
-        asyncio.gather(task_state, task_actions)
-
-    async def handle_state(self, websocket):
-        """Handle state.
-
-        Handles the websocket connection and retrieve and push to the queue.
-        """
-        logging.info("waiting for state to receive...")
-        async for msg_state in websocket:
-            logging.info(f"client recv: {msg_state}")
-            self.state_queue.put_nowait(msg_state)
-
-    async def handle_actions(self, websocket):
-        """Handle actions."""
-        logging.info(f"Waiting for actions to send..., {self.action_queue.qsize()}")
-        while True:
-            try:
-                logging.info("getting action...")
-                actions = await self.action_queue.get()
-            except asyncio.QueueEmpty:
-                continue
-            if actions:
-                logging.info("Sending actions: %s", actions)
-                await websocket.send(json.dumps(actions))
-
-
-def network_thread(handler: Callable, host: str, port: int):
-    """Network thread."""
-    async def handle_network(loop: asyncio.AbstractEventLoop):
-        """Handle network."""
-        logging.info("Connecting to %s:%s", host, port)
-        async for websocket in websockets.connect(f"ws://{host}:{port}"):
-            logging.info("Connected")
-            try:
-                task = loop.create_task(handler(websocket, loop))
-                await task
-            except websockets.ConnectionClosed:
-                logging.info("Connection closed")
-                task.cancel()
-                continue
-        logging.info("Disconnected")
-    loop = asyncio.new_event_loop()
-    # loop.set_debug(True)
-    logging.info("starting network thread, loop: %s", loop)
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(handle_network(loop))
-    loop.run_forever()
-    loop.close()
+        for network_event in ws.ws.events():
+            if isinstance(network_event, Message):
+                logging.info(network_event.data)
+                self.state_queue.put(network_event.data)
+            elif isinstance(network_event, CloseConnection):
+                ws.setup(self.host, self.port)
+            elif isinstance(network_event, Ping):
+                ws.net_send(ws.ws.send(Pong(network_event.payload)))
+            else:
+                logging.warn(f"Unknown network event: {network_event}")
 
 
 def main():
@@ -174,17 +135,17 @@ def main():
     logging_setup()
     logging.info("Main.")
     Resources()
-    client = BugHuntClient()
+    host, port = ('localhost', 8766)
+    ws.setup(host, port)
+    ws.send(json.dumps({"type": "name", "data": "player_pos"}))
+    client = BugHuntClient(host, port)
     client.run()
     client.init()
-    host, port = ('localhost', 8766)
-    threading.Thread(target=network_thread, daemon=True, kwargs={
-        "handler": client.handler,
-        "host": host,
-        "port": port
-    }).start()
+
     pyglet.clock.schedule_interval(client.update_state, 1/120.0)
+    pyglet.clock.schedule_interval(client.network_thread, 1/60)
     pyglet.app.run()
+    ws.close()
 
 
 if __name__ == "__main__":
