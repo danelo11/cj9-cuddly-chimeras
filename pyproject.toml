@@ -12,6 +12,7 @@ numpy = "^1.23.1"
 certifi = "^2022.6.15"
 wsproto = "^1.1.0"
 websockets = "^10.3"
+Pillow = "^9.2.0"
 
 [tool.poetry.dev-dependencies]
 # Base tools

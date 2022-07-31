@@ -7,15 +7,17 @@ from typing import Callable
 
 import websockets
 
+from bughunt.core.resources import Map, Resources
 from bughunt.serverside.player import PlayerServer
 
 
 class BugHuntServer():
     """BugHunt Server."""
 
-    def __init__(self):
+    def __init__(self, map: Map):
         self.action_queue = asyncio.Queue()
         self.state_queue = asyncio.Queue()
+        self.map = map
 
     def run(self):
         """Run the game."""
@@ -126,8 +128,8 @@ def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
-
-    server = BugHuntServer()
+    map = Resources().load_map("maze.png")
+    server = BugHuntServer(map=map)
     server.run()
     server.init()
 

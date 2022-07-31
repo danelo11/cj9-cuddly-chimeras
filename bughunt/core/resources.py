@@ -1,15 +1,49 @@
 """Resources."""
 import logging
-import os
 import pathlib
+from dataclasses import dataclass, field
 
+import numpy as np
 import pyglet
+from PIL import Image
 
 
 def center_image(image):
     """Sets an image's anchor point to its center"""
     image.anchor_x = image.width / 2
     image.anchor_y = image.height / 2
+
+
+# Walls Polygons
+Walls = list[list[tuple[int, int]]]
+
+
+@dataclass
+class Map:
+    """Map.
+
+    Map data.
+    """
+
+    array_data: np.array = field(default_factory=lambda: np.array([]))
+    width: int = 0
+    height: int = 0
+
+    def is_wall(self, x, y):
+        """Check if the given coordinates are a wall."""
+        return self.array_data[x, y]
+
+    def is_out_boundary(self, x, y):
+        """Check if the given coordinates are out of boundary."""
+        if x < 0.0:
+            return True
+        if x > self.width:
+            return True
+        if y < 0.0:
+            return True
+        if y > self.height:
+            return True
+        return False
 
 
 class Resources():
@@ -39,14 +73,33 @@ class Resources():
         # player_image = pyglet.image.load('player.png')
         return player_image
 
+    def load_map(self, map_filename: pathlib.Path) -> Map:
+        """Load map.
+
+        Loads a map image and transforms it to polygons in place of the walls.
+        """
+        image = Image.open(self.resource_path / map_filename)
+        image = image.convert('RGBA')
+        # image.show()
+        self.logger.info(f"Map image: {image}")
+        threshold = 100
+        # Grayscale
+        image_file = image.convert('L')
+        # Threshold
+        image_file = image_file.point(lambda p: 255 if p > threshold else 0)
+        # To mono
+        image_file = image_file.convert('1')
+        im = np.array(image_file)
+        map = Map(array_data=im, width=image.width, height=image.height)
+        return map
+
 
 def main():
     """Main function."""
     logging.basicConfig(level=logging.INFO)
     logging.info("Main.")
-    pyglet.resource.path = ['.\\pygletexample\\resources']
-    pyglet.resource.reindex()
-    os.walk(pyglet.resource.path)
+    resources = Resources()
+    resources.load_map('maze.png')
 
 
 if __name__ == "__main__":
